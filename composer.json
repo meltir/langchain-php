@@ -16,13 +16,18 @@
     ],
     "require": {
         "php": "^8.1",
-        "openai-php/client": "^0.3.5",
+        "ext-sqlite3": "*",
+        "nyholm/psr7": "^1.8",
+        "openai-php/client": "^0.6.",
         "psr/simple-cache": "^3.0",
         "ramsey/uuid": "^4.7",
-        "stechstudio/backoff": "^1.2"
+        "stechstudio/backoff": "^1.2",
+        "symfony/http-client": "^6.3"
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^3.13",
+        "guzzlehttp/guzzle": "^7.7",
+        "phpstan/phpstan": "^1.10",
         "phpunit/phpunit": "^9.5",
         "slevomat/coding-standard": "^8.8"
     },
@@ -40,13 +45,15 @@
         "test": "vendor/bin/phpunit",
         "test-coverage": "XDEBUG_MODE=coverage vendor/bin/phpunit",
         "format": "vendor/bin/phpcbf",
-        "lint": "vendor/bin/phpcs"
+        "lint": "vendor/bin/phpcs",
+        "phpstan": "vendor/bin/phpstan"
     },
     "config": {
         "sort-packages": true,
         "allow-plugins": {
             "phpstan/extension-installer": true,
-            "dealerdirect/phpcodesniffer-composer-installer": true
+            "dealerdirect/phpcodesniffer-composer-installer": true,
+            "php-http/discovery": true
         }
     },
     "minimum-stability": "dev",

@@ -2,6 +2,10 @@
 
 namespace Kambo\Langchain\Tests\LLMs;
 
+use Closure;
+use Exception;
+use Http\Discovery\Psr18Client;
+use OpenAI\ValueObjects\Transporter\QueryParams;
 use PHPUnit\Framework\TestCase;
 use Kambo\Langchain\LLMs\OpenAI;
 use GuzzleHttp\Client as GuzzleClient;
@@ -13,6 +17,9 @@ use OpenAI\ValueObjects\Transporter\Headers;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
+use Psr\Http\Client\ClientInterface;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 use Psr\SimpleCache\CacheInterface;
 use RuntimeException;
 use SplFileInfo;
@@ -388,10 +395,39 @@ class OpenAITest extends TestCase
         $handlerStack = HandlerStack::create($mockHandler);
         $client = new GuzzleClient(['handler' => $handlerStack]);
 
-        $transporter = new HttpTransporter($client, $baseUri, $headers);
+        $queryParams = QueryParams::create();
+        $sendAsync = self::makeStreamHandler($client);
+
+        $transporter = new HttpTransporter($client, $baseUri, $headers, $queryParams, $sendAsync);
 
         return new Client($transporter);
     }
+
+
+    private static ?Closure $streamHandler = null;
+
+    /**
+     * Creates a new stream handler for "stream" requests.
+     */
+    private static function makeStreamHandler(ClientInterface $client): Closure
+    {
+        if (! is_null(self::$streamHandler)) {
+            return self::$streamHandler;
+        }
+
+        if ($client instanceof GuzzleClient) {
+            return fn (RequestInterface $request): ResponseInterface => $client->send($request, ['stream' => true]);
+        }
+
+        if ($client instanceof Psr18Client) { // @phpstan-ignore-line
+            return fn (RequestInterface $request): ResponseInterface => $client->sendRequest($request); // @phpstan-ignore-line
+        }
+
+        return function (RequestInterface $_): never {
+            throw new Exception('To use stream requests you must provide an stream handler closure via the OpenAI factory.');
+        };
+    }
+
 
     private function createTempFolder(
         string $dir = null,
